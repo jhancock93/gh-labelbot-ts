@@ -3,14 +3,13 @@ import getConfig from 'probot-config'
 import { BotConfig } from './BotConfig'
 import { Label } from './label'
 
-const events = [
-  'pull_request.opened',
-  'pull_request.reopened',
-  'pull_request.synchronize'
-]
 export = (app: Application) => {
   app.on(
-    events,
+    [
+      'pull_request.opened',
+      'pull_request.reopened',
+      'pull_request.synchronize'
+    ],
     async (context) => {
       autolabelCheck(context)
     })
@@ -28,7 +27,7 @@ export = (app: Application) => {
     if (!config) {
       context.log.debug('Empty configuration found, using defaults...')
       config = {
-        branchLabels: { release: 'release-.*' },
+        targetBranchLabels: { release: 'release-.*' },
         pathLabels: {
           docs: ['*.md', 'docs/*']
         }

@@ -9,7 +9,7 @@ import { Probot } from 'probot'
 // Requiring our fixtures
 
 const fs = require('fs')
-const path = require('path')
+import path from 'path'
 const pullRequest1 = import('./fixtures/pull_request_master.opened.json')
 
 
@@ -33,17 +33,24 @@ describe('validate config parsing and loading', () => {
   })
 })
 
-/*
+
 function doNockGetAccessToken() {
-  // Test that we correctly return a test token
+  // Test that we correctly return a test token. Doesn't seem to be needed right now
+  /*
   nock('https://api.github.com')
     .log(console.log)
-    .post('/app/installations/60731/access_tokens')
+    .post('/app/installations/60924/access_tokens')
     .reply(200, { token: 'test' })
+    */
 }
-*/
 
 function doNockConfigRequests() {
+  //bot will try to call installations API
+  nock('https://api.github.com')
+    .log(console.log)
+    .get('/installation/repositories*')
+    .reply(200)
+
   // bot will try to read config file from repo
   nock('https://api.github.com')
     .get('/repos/jhancock93/probot-test/contents/.github/labelbot.yml')
@@ -71,10 +78,11 @@ describe('My Probot app', () => {
 
   beforeEach(() => {
     nock.disableNetConnect()
-    probot = new Probot({ id: 123, cert: mockCert })
+    probot = new Probot({ id: 123, cert: mockCert, githubToken: 'test' })
     // Load our app into probot
     const app = probot.load(myProbotApp)
 
+    // just return a test token
     app.app = () => 'test'
   })
 
@@ -102,11 +110,7 @@ describe('My Probot app', () => {
     // files that include a markdown file
     const prFilesMarkdown = require('./fixtures/prFiles-markdown.json')
 
-    // Test that we correctly return a test token
-    nock('https://api.github.com')
-      .post('/app/installations/60731/access_tokens')
-      .reply(200, { token: 'test' })
-
+    doNockGetAccessToken()
     doNockConfigRequests()
 
     nock('https://api.github.com')
@@ -122,7 +126,7 @@ describe('My Probot app', () => {
       })
       .reply(200)
 
-    await probot.receive({ name: 'pull_request', payload: pullRequest1 })
+    await probot.receive({ name: 'pull_request.opened', payload: pullRequest1 })
     console.error('pending mocks: %j', nock.pendingMocks())
     expect(nock.isDone()).toBe(true)
   })

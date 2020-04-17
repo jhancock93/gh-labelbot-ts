@@ -1,7 +1,12 @@
 {
   "signal": "SIGINT",
-  "watch": ["lib", ".env"],
+  "watch": [
+    "lib",
+    ".env"
+  ],
   "delay": "2000",
   "verbose": false,
-  "exec": ["npm run start"]
+  "exec": [
+    "npm run start --unhandled-rejections=strict"
+  ]
 }

@@ -2,31 +2,19 @@ import { Context, GitHubAPI } from 'probot' // eslint-disable-line no-unused-var
 import { BotConfig } from './BotConfig'
 import { LoggerWithTarget } from 'probot/lib/wrap-logger';
 
-const ignore = require('ignore')
-const matchPattern = require('./matchPattern')
-/*
-const http = require('http')
-const originalRequest = http.request
+import ignore from 'ignore';
+import { matchPattern } from './matchPattern';
 
-http.request = function wrapMethodRequest(req) {
-  console.log(req.host, req.body)
-  return originalRequest.apply(this, arguments)
-}
-*/
 
 export class Label {
   github: GitHubAPI
   logger: LoggerWithTarget
   config: BotConfig
-  owner: string
-  repo: string
 
   constructor(github: GitHubAPI, config: BotConfig, logger: LoggerWithTarget) {
     this.github = github
     this.logger = logger
     this.config = config;
-    this.owner = config.owner!;
-    this.repo = config.repo!;
 
     this.logger.debug('Configuration:' + JSON.stringify(config))
   }
@@ -47,17 +35,20 @@ export class Label {
     const targetBranch = context.payload.pull_request.base.ref
     this.logger.debug(`Target branch for PR is "${targetBranch}"`)
     if (this.config.targetBranchLabels) {
-      this.config.targetBranchLabels.forEach((value: string, key: string) => {
-        this.logger.debug(`Testing if branch ${targetBranch} matches pattern ${value}`)
-        if (matchPattern(value, targetBranch)) {
-          labels.add(key)
+      for (let key of this.config.targetBranchLabels.keys()) {
+        const value = this.config.targetBranchLabels.get(key)
+        if (value) {
+          this.logger.debug(`Testing if branch ${targetBranch} matches pattern ${value}`)
+          if (matchPattern(value, targetBranch)) {
+            labels.add(key)
+          }
         }
-      })
+      }
     }
 
-    const pull_number = context.payload.pull_number;
-    this.logger.debug(`Pulling files for PR ${context.payload.pull_request.number}`)
-    const files = await context.github.pulls.listFiles(context.repo({ pull_number: context.payload.pull_request.number }))
+    const pull_number = context.payload.pull_request.number;
+    this.logger.debug(`Pulling files for PR ${pull_number}`)
+    const files = await context.github.pulls.listFiles(context.repo({ pull_number: pull_number }))
     const changedFiles = files.data.map(file => file.filename)
     if (changedFiles && changedFiles.length > 0) {
       this.config.pathLabels?.forEach((value: string[], key: string) => {
@@ -74,7 +65,7 @@ export class Label {
 
     this.logger.info('Adding labels', labelsToAdd)
     if (labelsToAdd.length > 0) {
-      return context.github.issues.addLabels({ labels: labelsToAdd, repo: this.repo, owner: this.owner, number: pull_number })
+      return context.github.issues.addLabels(context.repo({ labels: labelsToAdd, issue_number: pull_number }))
     }
     return
   }
