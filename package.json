@@ -5,7 +5,7 @@
   "description": "A PR labeler GitHub App built with Probot.",
   "author": "John Hancock <jhancock93@users.noreply.github.com>",
   "license": "ISC",
-  "repository": "https://github.com/jhancock93/gh-label-bot-ts.git",
+  "repository": "https://github.com/jhancock93/gh-labelbot-ts.git",
   "homepage": "https://github.com/jhancock93/gh-label-bot-ts",
   "bugs": "https://github.com/jhancock93/gh-label-bot-ts/issues",
   "keywords": [
@@ -23,15 +23,19 @@
     "test:watch": "jest --watch --notify --notifyMode=change --coverage"
   },
   "dependencies": {
-    "probot": "^9.5.3"
+    "@hapi/joi": "^17.1.1",
+    "ignore": "^3.3.3",
+    "probot": "^9.11.3",
+    "probot-config": "^1.1.0"
   },
   "devDependencies": {
     "@types/jest": "^25.1.0",
     "@types/nock": "^11.1.0",
     "@types/node": "^13.1.0",
+    "@types/joi": "^14.3.4",
     "@typescript-eslint/parser": "^2.4.0",
     "eslint-plugin-typescript": "^0.14.0",
-    "jest": "^24.9.0",
+    "jest": "^25.2.1",
     "nock": "^12.0.0",
     "nodemon": "^2.0.0",
     "smee-client": "^1.1.0",

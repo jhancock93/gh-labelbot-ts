@@ -1,10 +1,44 @@
-import { Application } from 'probot' // eslint-disable-line no-unused-vars
+import { Application, Context } from 'probot' // eslint-disable-line no-unused-vars
+import getConfig from 'probot-config'
+import { BotConfig } from './BotConfig'
+import { Label } from './label'
 
+const events = [
+  'pull_request.opened',
+  'pull_request.reopened',
+  'pull_request.synchronize'
+]
 export = (app: Application) => {
-  app.on('issues.opened', async (context) => {
-    const issueComment = context.issue({ body: 'Thanks for opening this issue!' })
-    await context.github.issues.createComment(issueComment)
-  })
+  app.on(
+    events,
+    async (context) => {
+      autolabelCheck(context)
+    })
+
+  async function autolabelCheck(context: Context) {
+    context.log.debug('Received event')
+    const label = await forRepository(context)
+    label.apply(context)
+  }
+
+  async function forRepository(context: Context) {
+    context.log.debug('Checking configuration...')
+    let config = await getConfig(context, 'labelbot.yml')
+
+    if (!config) {
+      context.log.debug('Empty configuration found, using defaults...')
+      config = {
+        branchLabels: { release: 'release-.*' },
+        pathLabels: {
+          docs: ['*.md', 'docs/*']
+        }
+      }
+    }
+
+    const { owner, repo } = context.repo()
+    const botConfig = new BotConfig(config, owner, repo)
+    return new Label(context.github, botConfig, app.log)
+  }
   // For more information on building apps:
   // https://probot.github.io/docs/
 
