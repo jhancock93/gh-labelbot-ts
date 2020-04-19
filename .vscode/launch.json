@@ -25,7 +25,8 @@
                 ".\\lib\\index.js"
             ],
             "outFiles": [],
-            "sourceMaps": true
+            "sourceMaps": true,
+            "env": {}
         },
         {
             "name": "Jest Current File",

@@ -1,5 +1,4 @@
 import { Application, Context } from 'probot' // eslint-disable-line no-unused-vars
-import getConfig from 'probot-config'
 import { BotConfig } from './BotConfig'
 import { Label } from './label'
 
@@ -22,10 +21,15 @@ export = (app: Application) => {
 
   async function forRepository(context: Context) {
     context.log.debug('Checking configuration...')
-    let config = await getConfig(context, 'labelbot.yml')
 
-    if (!config) {
-      context.log.debug('Empty configuration found, using defaults...')
+    let config: any
+    try {
+      context.log.trace('Calling getConfig')
+      config = await context.config('labelbot.yml')
+      context.log.debug(`Retrieved config: ${config}`)
+    }
+    catch (Error) {
+      context.log.warn(`Failed to retrieve configuration using getConfig with error ${Error} using defaults...`)
       config = {
         targetBranchLabels: { release: 'release-.*' },
         pathLabels: {
@@ -33,11 +37,14 @@ export = (app: Application) => {
         }
       }
     }
-
+    finally {
+      context.log.debug('forRepository finally')
+    }
     const { owner, repo } = context.repo()
     const botConfig = new BotConfig(config, owner, repo)
     return new Label(context.github, botConfig, app.log)
   }
+
   // For more information on building apps:
   // https://probot.github.io/docs/
 

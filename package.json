@@ -25,8 +25,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "ignore": "^3.3.3",
-    "probot": "^9.11.3",
-    "probot-config": "^1.1.0"
+    "probot": "^9.11.3"
   },
   "devDependencies": {
     "@types/jest": "^25.1.0",
