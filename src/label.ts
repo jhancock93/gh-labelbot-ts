@@ -1,10 +1,9 @@
 import { Context, GitHubAPI } from 'probot' // eslint-disable-line no-unused-vars
 import { BotConfig } from './BotConfig'
-import { LoggerWithTarget } from 'probot/lib/wrap-logger';
+import { LoggerWithTarget } from 'probot/lib/wrap-logger'
 
 import ignore from 'ignore';
-import { matchPattern } from './matchPattern';
-
+import { matchPattern } from './matchPattern'
 
 export class Label {
   github: GitHubAPI
@@ -19,7 +18,19 @@ export class Label {
     this.logger.debug('Configuration:' + JSON.stringify(config))
   }
 
-  async apply(context: Context) {
+  applyBranchLabels(branch: string, config: Map<string, string>, labels: Set<string>): void {
+    for (let key of config.keys()) {
+      const value = config.get(key)
+      if (value) {
+        this.logger.debug(`Testing if branch ${branch} matches pattern ${value}`)
+        if (matchPattern(value, branch)) {
+          labels.add(key)
+        }
+      }
+    }
+  }
+
+  async apply(context: Context): Promise<Boolean> {
     const { title, html_url: htmlUrl } = context.payload.pull_request
 
     this.logger.info(`Processing PR "${title}" ( ${htmlUrl} )`)
@@ -32,23 +43,22 @@ export class Label {
       labels.add(this.config.label)
     }
 
+
     const targetBranch = context.payload.pull_request.base.ref
-    this.logger.debug(`Target branch for PR is "${targetBranch}"`)
+    this.logger.debug(`Target (base) branch for PR is "${targetBranch}"`)
     if (this.config.targetBranchLabels) {
-      for (let key of this.config.targetBranchLabels.keys()) {
-        const value = this.config.targetBranchLabels.get(key)
-        if (value) {
-          this.logger.debug(`Testing if branch ${targetBranch} matches pattern ${value}`)
-          if (matchPattern(value, targetBranch)) {
-            labels.add(key)
-          }
-        }
-      }
+      this.applyBranchLabels(targetBranch, this.config.targetBranchLabels, labels)
     }
 
-    const pull_number = context.payload.pull_request.number;
-    this.logger.debug(`Pulling files for PR ${pull_number}`)
-    const files = await context.github.pulls.listFiles(context.repo({ pull_number: pull_number }))
+    const sourceBranch = context.payload.pull_request.head.ref
+    this.logger.debug(`Source (head) branch for PR is "${sourceBranch}"`)
+    if (this.config.sourceBranchLabels) {
+      this.applyBranchLabels(sourceBranch, this.config.sourceBranchLabels, labels)
+    }
+
+    const pullNumber = context.payload.pull_request.number;
+    this.logger.debug(`Pulling files for PR ${pullNumber}`)
+    const files = await context.github.pulls.listFiles(context.repo({ pull_number: pullNumber }))
     const changedFiles = files.data.map(file => file.filename)
     if (changedFiles && changedFiles.length > 0) {
       this.config.pathLabels?.forEach((value: string[], key: string) => {
@@ -65,8 +75,14 @@ export class Label {
 
     this.logger.info('Adding labels', labelsToAdd)
     if (labelsToAdd.length > 0) {
-      return context.github.issues.addLabels(context.repo({ labels: labelsToAdd, issue_number: pull_number }))
+      try {
+        await context.github.issues.addLabels(context.repo({ labels: labelsToAdd, issue_number: pullNumber }))
+        return true
+      }
+      catch {
+        return false
+      }
     }
-    return
+    return false
   }
 }
