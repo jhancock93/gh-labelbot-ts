@@ -10,16 +10,16 @@ export = (app: Application) => {
       'pull_request.synchronize'
     ],
     async (context) => {
-      autolabelCheck(context)
+      await autolabelCheck(context)
     })
 
-  async function autolabelCheck(context: Context) {
+  async function autolabelCheck (context: Context): Promise<void> {
     context.log.debug('Received event')
     const label = await forRepository(context)
-    label.apply(context)
+    await label.apply(context)
   }
 
-  async function forRepository(context: Context) {
+  async function forRepository (context: Context): Promise<Label> {
     context.log.debug('Checking configuration...')
 
     let config: any
@@ -27,8 +27,7 @@ export = (app: Application) => {
       context.log.trace('Calling getConfig')
       config = await context.config('labelbot.yml')
       context.log.debug(`Retrieved config: ${config}`)
-    }
-    catch (Error) {
+    } catch (Error) {
       context.log.warn(`Failed to retrieve configuration using getConfig with error ${Error} using defaults...`)
       config = {
         targetBranchLabels: { release: 'release-.*' },
@@ -36,8 +35,7 @@ export = (app: Application) => {
           docs: ['*.md', 'docs/*']
         }
       }
-    }
-    finally {
+    } finally {
       context.log.debug('forRepository finally')
     }
     const botConfig = new BotConfig(config)
