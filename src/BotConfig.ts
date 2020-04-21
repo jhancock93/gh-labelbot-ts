@@ -16,16 +16,12 @@ const schema = Joi.object().keys({
 })
 
 export class BotConfig {
-    repo?: string;
-    owner?: string;
     label?: string;
     targetBranchLabels: Map<string, string>;
     sourceBranchLabels: Map<string, string>;
     pathLabels: Map<string, Array<string>>;
 
-    constructor(config: any, owner?: string, repo?: string) {
-        owner = owner
-        repo = repo
+    constructor(config: any) {
         schema.validate(config)
         this.label = config.label
         this.targetBranchLabels = new Map<string, string>()

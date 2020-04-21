@@ -40,8 +40,7 @@ export = (app: Application) => {
     finally {
       context.log.debug('forRepository finally')
     }
-    const { owner, repo } = context.repo()
-    const botConfig = new BotConfig(config, owner, repo)
+    const botConfig = new BotConfig(config)
     return new Label(context.github, botConfig, app.log)
   }
 

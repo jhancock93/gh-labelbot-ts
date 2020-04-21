@@ -6,23 +6,30 @@ import nock from 'nock'
 import myProbotApp from '../src'
 import { BotConfig } from '../src/BotConfig'
 import { Probot /*, GitHubAPI, Context*/ } from 'probot'
+import { wrapLogger } from 'probot/lib/wrap-logger'
+import { logger } from 'probot/lib/logger'
 import debug from 'debug'
+
 // import Webhooks from '@octokit/webhooks'
 // import { createMockResponse } from './fixtures/octokit/mock-response'
 
 const fs = require('fs')
 import path from 'path'
 import * as pullRequest1 from './fixtures/pull_request_master.opened.json'
+import * as pullRequestTargetRelease from './fixtures/pull_request_targetBranch.opened.json'
 
+import { Label } from '../src/label'
 
-/*
-const defaultTestConfig = {
-  targetBranchLabels: { release: 'release-.*' },
+const defaultConfig = {
+  sourceBranchLabels: { hotfix: 'hotfix-.*', bug: 'bugfix-.*' },
+  targetBranchLabels: { release: 'release-.*', trunk: '(master|develop)' },
   pathLabels: {
-    docs: ['*.md', 'docs/*']
+    docs: ['*.md', 'docs/*'],
+    config: ['*.yml']
   }
 }
-*/
+const defaultBotConfig = new BotConfig(defaultConfig)
+const traceLogger = wrapLogger(logger)
 
 describe('validate config parsing and loading', () => {
   test('construct BotConfig from valid schema 1', () => {
@@ -48,6 +55,36 @@ describe('validate config parsing and loading', () => {
   })
 })
 
+describe('validate proper labels are generated', () => {
+  test('tests that a docs label is generated on markdown change', () => {
+    const labels = Label.generatePullRequestLabels(pullRequestTargetRelease.pull_request, defaultBotConfig,
+      ["src/README.md"], traceLogger)
+    expect(labels).toEqual(expect.arrayContaining(['docs', 'release']))
+  })
+  test('tests that multiple labels are generated for different cases', () => {
+    const pullRequestData = {
+      url: "fakeUrl",
+      html_url: "fakeHtml",
+      number: 1,
+      head: {
+        ref: "bugfix-pt-12345"
+      },
+      repo: {
+        name: "probot-test",
+        owner: {
+          login: "testUser"
+        }
+      },
+      base: {
+        ref: "master"
+      }
+    }
+    const labels = Label.generatePullRequestLabels(
+      pullRequestData, defaultBotConfig,
+      ["src/README.md", "config.yml"], traceLogger)
+    expect(labels).toEqual(expect.arrayContaining(['docs', 'config', 'trunk', 'bug']))
+  })
+})
 
 function doNockGetAccessToken() {
   // Test that we correctly return a test token. Doesn't seem to be needed right now
@@ -136,19 +173,16 @@ describe('My Probot app', () => {
     doNockConfigRequests()
 
     nock('https://api.github.com')
-      // .log(console.log)
       .get('/repos/jhancock93/probot-test/pulls/1/files')
       .reply(200, prFilesMarkdown.data)
 
     // Test that a label is applied
     nock('https://api.guthub.com')
-      // .log(console.log)
       .patch('/repos/jhancock93/probot-test/issues/1', (body) => {
         expect(body).toMatchObject({ labels: ['docs'] })
         return true
       })
       .reply(200)
-
 
     nock.emitter.on('no match', (req) => {
       throw Error(`Request fired that did not match what was mocked ${req}`)
@@ -160,41 +194,12 @@ describe('My Probot app', () => {
     console.error('pending mocks: %j', nock.pendingMocks())
     //expect(nock.isDone()).toBe(true)
   })
+})
 
-
-  /*
-    test('tests that a label is added based on target branch', async () => {
-      const pullRequestReleaseBranch = require('./fixtures/pull_request_targetBranch.opened.json')
-      const prFilesOther = require('./fixtures/prFiles-other.json')
-   
-      // doNockGetAccessToken()
-      doNockConfigRequests()
-   
-      nock('https://api.github.com')
-        .log(console.log)
-        .get('/repos/jhancock93/probot-test/pulls/2/files')
-        .reply(200, prFilesOther.data)
-   
-      // Test that a branch-based label is applied
-      nock('https://api.guthub.com')
-        .log(console.log)
-        .patch('/repos/jhancock93/probot-test/issues/2', (body) => {
-          expect(body).toMatchObject({ labels: ['release'] })
-          return true
-        })
-        .reply(200)
-   
-      await probot.receive({ name: 'pull_request', payload: pullRequestReleaseBranch })
-      console.error('pending mocks: %j', nock.pendingMocks())
-      expect(nock.isDone()).toBe(true)
-    })
-  */
-
-  afterEach(() => {
-    debug.disable()
-    nock.cleanAll()
-    nock.enableNetConnect()
-  })
+afterEach(() => {
+  debug.disable()
+  nock.cleanAll()
+  nock.enableNetConnect()
 })
 
 // For more information about testing with Jest see:
