@@ -6,12 +6,14 @@ import nock from 'nock'
 import myProbotApp from '../src'
 import { BotConfig } from '../src/BotConfig'
 import { Probot /*, GitHubAPI, Context*/ } from 'probot'
+import debug from 'debug'
 // import Webhooks from '@octokit/webhooks'
 // import { createMockResponse } from './fixtures/octokit/mock-response'
 
 const fs = require('fs')
 import path from 'path'
 import * as pullRequest1 from './fixtures/pull_request_master.opened.json'
+
 
 /*
 const defaultTestConfig = {
@@ -50,7 +52,7 @@ describe('validate config parsing and loading', () => {
 function doNockGetAccessToken() {
   // Test that we correctly return a test token. Doesn't seem to be needed right now
   nock('https://api.github.com')
-    .log(console.log)
+    // .log(console.log)
     .post('/app/installations/7981746/access_tokens') //60924
     .reply(200, { token: 'test' })
 }
@@ -67,7 +69,7 @@ function doNockConfigRequests() {
 
   // bot will try to read config file from repo
   nock('https://api.github.com')
-    .log(console.log)
+    // .log(console.log)
     .get('/repos/jhancock93/probot-test/contents/.github/labelbot.yml')
     .reply(404)
     .get('/repos/jhancock93/.github/contents/.github/labelbot.yml')
@@ -99,6 +101,7 @@ describe('My Probot app', () => {
   })
 
   beforeEach(() => {
+    debug.enable('nock*')
     /*
     github = GitHubAPI()
     event = {
@@ -115,7 +118,7 @@ describe('My Probot app', () => {
     context = new Context(event, github, {} as any)
     */
 
-    nock.disableNetConnect()
+    //nock.disableNetConnect()
     probot = new Probot({ id: 123, cert: mockCert, githubToken: 'test' })
     // Load our app into probot
     const app = probot.load(myProbotApp)
@@ -133,18 +136,24 @@ describe('My Probot app', () => {
     doNockConfigRequests()
 
     nock('https://api.github.com')
-      .log(console.log)
+      // .log(console.log)
       .get('/repos/jhancock93/probot-test/pulls/1/files')
       .reply(200, prFilesMarkdown.data)
 
     // Test that a label is applied
     nock('https://api.guthub.com')
-      .log(console.log)
+      // .log(console.log)
       .patch('/repos/jhancock93/probot-test/issues/1', (body) => {
         expect(body).toMatchObject({ labels: ['docs'] })
         return true
       })
       .reply(200)
+
+
+    nock.emitter.on('no match', (req) => {
+      throw Error(`Request fired that did not match what was mocked ${req}`)
+    })
+
 
     const eventWithPayload = { name: 'pull_request', payload: pullRequest1 }
     await probot.receive(eventWithPayload);
@@ -182,6 +191,7 @@ describe('My Probot app', () => {
   */
 
   afterEach(() => {
+    debug.disable()
     nock.cleanAll()
     nock.enableNetConnect()
   })

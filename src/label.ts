@@ -18,11 +18,10 @@ export class Label {
     this.logger.debug('Configuration:' + JSON.stringify(config))
   }
 
-  applyBranchLabels(branch: string, config: Map<string, string>, labels: Set<string>): void {
+  static applyBranchLabels(branch: string, config: Map<string, string>, labels: Set<string>): void {
     for (let key of config.keys()) {
       const value = config.get(key)
       if (value) {
-        this.logger.debug(`Testing if branch ${branch} matches pattern ${value}`)
         if (matchPattern(value, branch)) {
           labels.add(key)
         }
@@ -30,39 +29,29 @@ export class Label {
     }
   }
 
-  async apply(context: Context): Promise<Boolean> {
-    const { title, html_url: htmlUrl } = context.payload.pull_request
-
-    this.logger.info(`Processing PR "${title}" ( ${htmlUrl} )`)
-
+  // generate a set of labels based on the context and the files changed in the pull request
+  static generatePullRequestLabels(pull_request: any, config: BotConfig, changedFiles: string[], logger: LoggerWithTarget): string[] {
     const labels = new Set<string>()
-    if (this.config.label) {
-      if (!context.payload.repository.private) {
-        this.logger.info(`Updating PR with static label from config "${title}" ( ${htmlUrl} ): "${this.config.label}"`)
-      }
-      labels.add(this.config.label)
+    if (config.label) {
+      labels.add(config.label)
     }
 
-
-    const targetBranch = context.payload.pull_request.base.ref
-    this.logger.debug(`Target (base) branch for PR is "${targetBranch}"`)
-    if (this.config.targetBranchLabels) {
-      this.applyBranchLabels(targetBranch, this.config.targetBranchLabels, labels)
+    const pullNumber = pull_request.number;
+    const targetBranch = pull_request.base.ref
+    logger.debug(`Target (base) branch for PR #${pullNumber} is "${targetBranch}"`)
+    if (config.targetBranchLabels) {
+      this.applyBranchLabels(targetBranch, config.targetBranchLabels, labels)
     }
 
-    const sourceBranch = context.payload.pull_request.head.ref
-    this.logger.debug(`Source (head) branch for PR is "${sourceBranch}"`)
-    if (this.config.sourceBranchLabels) {
-      this.applyBranchLabels(sourceBranch, this.config.sourceBranchLabels, labels)
+    const sourceBranch = pull_request.head.ref
+    logger.debug(`Source (head) branch for PR #${pullNumber} is "${sourceBranch}"`)
+    if (config.sourceBranchLabels) {
+      this.applyBranchLabels(sourceBranch, config.sourceBranchLabels, labels)
     }
 
-    const pullNumber = context.payload.pull_request.number;
-    this.logger.debug(`Pulling files for PR ${pullNumber}`)
-    const files = await context.github.pulls.listFiles(context.repo({ pull_number: pullNumber }))
-    const changedFiles = files.data.map(file => file.filename)
     if (changedFiles && changedFiles.length > 0) {
-      this.config.pathLabels?.forEach((value: string[], key: string) => {
-        this.logger.info('Examining file changes for label', key, value)
+      config.pathLabels?.forEach((value: string[], key: string) => {
+        logger.info('Examining file changes for label', key, value)
         const matcher = ignore().add(value)
 
         if (changedFiles.find(file => matcher.ignores(file))) {
@@ -71,7 +60,21 @@ export class Label {
       })
     }
 
-    const labelsToAdd = Array.from(labels)
+    return Array.from(labels)
+  }
+
+  // Applies labels to a pull request based on the pull request details in the context and the configuration
+  async apply(context: Context): Promise<Boolean> {
+    const { title, html_url: htmlUrl } = context.payload.pull_request
+    const pullNumber = context.payload.pull_request.number;
+
+    this.logger.info(`Processing PR #${pullNumber} "${title}" ( ${htmlUrl} )`)
+    this.logger.debug(`Pulling files for PR ${pullNumber}`)
+    const files = await context.github.pulls.listFiles(context.repo({ pull_number: pullNumber }))
+    const changedFiles = files.data.map(file => file.filename)
+
+    const labelsToAdd = Label.generatePullRequestLabels(context.payload.pull_request,
+      this.config, changedFiles, this.logger)
 
     this.logger.info('Adding labels', labelsToAdd)
     if (labelsToAdd.length > 0) {
