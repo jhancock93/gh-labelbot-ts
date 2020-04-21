@@ -13,13 +13,13 @@ export = (app: Application) => {
       await autolabelCheck(context)
     })
 
-  async function autolabelCheck (context: Context): Promise<void> {
+  async function autolabelCheck(context: Context): Promise<void> {
     context.log.debug('Received event')
     const label = await forRepository(context)
     await label.apply(context)
   }
 
-  async function forRepository (context: Context): Promise<Label> {
+  async function forRepository(context: Context): Promise<Label> {
     context.log.debug('Checking configuration...')
 
     let config: any
