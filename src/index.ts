@@ -22,21 +22,17 @@ export = (app: Application) => {
   async function forRepository(context: Context): Promise<Label> {
     context.log.debug('Checking configuration...')
 
-    let config: any
+    let config: any = {}
     try {
       context.log.trace('Calling getConfig')
       config = await context.config('labelbot.yml')
       context.log.debug(`Retrieved config: ${config}`)
     } catch (Error) {
-      context.log.warn(`Failed to retrieve configuration using getConfig with error ${Error} using defaults...`)
-      config = {
-        targetBranchLabels: { release: 'release-.*' },
-        pathLabels: {
-          docs: ['*.md', 'docs/*']
-        }
-      }
-    } finally {
-      context.log.debug('forRepository finally')
+      context.log.warn(`Failed to retrieve configuration using getConfig with error ${Error} using empty configuration...`)
+    }
+    // Supply docs label
+    if (config == null) {
+      config = {}
     }
     const botConfig = new BotConfig(config)
     return new Label(context.github, botConfig, app.log)

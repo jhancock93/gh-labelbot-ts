@@ -1,4 +1,4 @@
-branchLabels:
+targetBranchLabels:
   release: 'release-*'
 
 pathLabels:

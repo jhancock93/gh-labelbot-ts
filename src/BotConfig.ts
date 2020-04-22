@@ -21,25 +21,29 @@ export class BotConfig {
   sourceBranchLabels: Map<string, string>
   pathLabels: Map<string, string[]>
 
-  constructor (config: any) {
-    schema.validate(config)
-    this.label = config.label
+  constructor(config: any) {
     this.targetBranchLabels = new Map<string, string>()
     this.sourceBranchLabels = new Map<string, string>()
     this.pathLabels = new Map<string, string[]>()
-    if (config.targetBranchLabels !== undefined) {
-      for (const k of Object.keys(config.targetBranchLabels)) {
-        this.targetBranchLabels.set(k, config.targetBranchLabels[k])
+
+    schema.validate(config)
+
+    if (config != null) {
+      this.label = config?.label
+      if (config.targetBranchLabels !== undefined) {
+        for (const k of Object.keys(config.targetBranchLabels)) {
+          this.targetBranchLabels.set(k, config.targetBranchLabels[k])
+        }
       }
-    }
-    if (config.sourceBranchLabels !== undefined) {
-      for (const k of Object.keys(config.sourceBranchLabels)) {
-        this.sourceBranchLabels.set(k, config.sourceBranchLabels[k])
+      if (config.sourceBranchLabels !== undefined) {
+        for (const k of Object.keys(config.sourceBranchLabels)) {
+          this.sourceBranchLabels.set(k, config.sourceBranchLabels[k])
+        }
       }
-    }
-    if (config.pathLabels !== undefined) {
-      for (const k of Object.keys(config.pathLabels)) {
-        this.pathLabels.set(k, config.pathLabels[k])
+      if (config.pathLabels !== undefined) {
+        for (const k of Object.keys(config.pathLabels)) {
+          this.pathLabels.set(k, config.pathLabels[k])
+        }
       }
     }
   }
