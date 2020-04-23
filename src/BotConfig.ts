@@ -16,7 +16,6 @@ const schema = Joi.object().keys({
 })
 
 export class BotConfig {
-  label?: string
   targetBranchLabels: Map<string, string>
   sourceBranchLabels: Map<string, string>
   pathLabels: Map<string, string[]>
@@ -29,7 +28,6 @@ export class BotConfig {
     schema.validate(config)
 
     if (config != null) {
-      this.label = config?.label
       if (config.targetBranchLabels !== undefined) {
         for (const k of Object.keys(config.targetBranchLabels)) {
           this.targetBranchLabels.set(k, config.targetBranchLabels[k])

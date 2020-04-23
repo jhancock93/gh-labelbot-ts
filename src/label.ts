@@ -32,9 +32,6 @@ export class Label {
   // generate a set of labels based on the context and the files changed in the pull request
   static generatePullRequestLabels(pullRequest: any, config: BotConfig, changedFiles: string[], logger: LoggerWithTarget): string[] {
     const labels = new Set<string>()
-    if (config.label !== undefined) {
-      labels.add(config.label)
-    }
 
     const pullNumber: number = pullRequest.number
     const targetBranch: string = pullRequest.base.ref

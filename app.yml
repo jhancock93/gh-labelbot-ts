@@ -124,7 +124,11 @@ default_permissions:
   # https://developer.github.com/v3/apps/permissions/
   # organization_administration: read
 
-
+  # Allow access to a single file
+  # https://developer.github.com/v3/apps/permissions/#permissions-on-single-file
+  single_file: read
+  single_file_name: .github/labelbot.yml
+  
 # The name of the GitHub App. Defaults to the name specified in package.json
 # name: My Probot App
 

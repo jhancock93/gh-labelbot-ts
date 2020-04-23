@@ -97,7 +97,7 @@ function doNockGetAccessToken() {
 
 function doNockConfigRequests() {
   // bot will try to read config file from repo
-  nock('https://api.github.com')
+  nock('https://api.github.com:443', { "encodedQueryParams": true })
     .get('/repos/jhancock93/probot-test/contents/.github/labelbot.yml')
     .reply(200, generateContentJson('labelbot.yml', 'labelbot.yml', validConfigFile))
 
@@ -166,11 +166,9 @@ describe('My Probot app', () => {
       .reply(200, prFilesMarkdown.data)
 
     // Test that a label is applied
-    nock('https://api.guthub.com')
-      .post('/repos/jhancock93/probot-test/issues/1/labels', (body) => {
-        expect(body).toMatch("docs")
-        return true
-      })
+    nock('https://api.guthub.com:443', { "encodedQueryParams": true })
+      .log(console.log)
+      .post('/repos/jhancock93/probot-test/issues/1/labels', ["docs"])
       .reply(200)
 
     const eventWithPayload = { name: 'pull_request', payload: pullRequest1 }
