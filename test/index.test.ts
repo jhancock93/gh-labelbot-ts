@@ -18,8 +18,14 @@ import path from 'path'
 import * as pullRequest1 from './fixtures/pull_request_master.opened.json'
 import * as pullRequestTargetRelease from './fixtures/pull_request_targetBranch.opened.json'
 import { Label } from '../src/label'
+import { RepositoryLabels, ILabelDefinition } from '../src/repositoryLabels'
 
 const defaultConfig = {
+  labelDefinitions: [
+    {name: 'hotfix', color: 'FF0000', description: 'A bug'},
+    {name: 'release', color: '1111DD', description: 'Targets release branch'},
+    {name: 'foobar', color: 77}
+  ],
   sourceBranchLabels: { hotfix: 'hotfix-.*', bug: 'bugfix-.*' },
   targetBranchLabels: { release: 'release-.*', trunk: '(master|develop)' },
   pathLabels: {
@@ -82,6 +88,35 @@ describe('validate proper labels are generated', () => {
       pullRequestData, defaultBotConfig,
       ["src/README.md", "config.yml"], traceLogger)
     expect(labels).toEqual(expect.arrayContaining(['docs', 'config', 'trunk', 'bug']))
+  })
+})
+
+describe('label changes are properly detected', () => 
+{
+  test('label definitions are created from input properly', () => {
+    const labelDefs = RepositoryLabels.readLabelDefinitionsFromConfig(defaultConfig)
+    expect(labelDefs[0].name).toEqual('hotfix')
+    expect(labelDefs[0].description).toEqual('A bug')
+    expect(labelDefs[2].name).toEqual('foobar')
+    expect(labelDefs[2].color).toEqual('000077')
+  })
+
+  test('label definition updates are generated correctly', () => {
+    const currentLabels = RepositoryLabels.readLabelDefinitionsFromConfig(defaultConfig)
+    const desiredLabels: ILabelDefinition[] = []
+    //clone current labels to desired
+    currentLabels.forEach(val => desiredLabels.push(Object.assign({}, val)))
+    desiredLabels[1].color = 'FFFFFF'
+    desiredLabels[1].description = 'New desc'
+    desiredLabels.push({name: 'newlabel', color: '112233', description: undefined})
+    var labelActions = RepositoryLabels.generateUpdates(currentLabels, desiredLabels)
+    expect(labelActions.labelsToAdd.length).toEqual(1)
+    expect(labelActions.labelsToAdd[0].name).toEqual('newlabel')
+    expect(labelActions.labelsToAdd[0].color).toEqual('112233')
+    expect(labelActions.labelsToUpdate.length).toEqual(1)
+    expect(labelActions.labelsToUpdate[0].name).toEqual(desiredLabels[1].name)
+    expect(labelActions.labelsToUpdate[0].color).toEqual('FFFFFF')
+    expect(labelActions.labelsToUpdate[0].description).toEqual('New desc')
   })
 })
 

@@ -9,6 +9,7 @@ Operation of the GitHub app depends on the presence of a configuration file name
 The configuration file provides multiple methodologies for auto-labeling. Labels can be applied based off of the target (base) branch name, the source (head) branch name, and/or the set of files modified in the PR.
 
 The format of the file is as following:
+
 ```yml
 sourceBranchLabels:
     labelA: RegEx
@@ -22,6 +23,7 @@ pathLabels:
 ```
 
 For example:
+
 ```yml
 sourceBranchLabels: 
     hotfix: 'hotfix-.*'
@@ -33,7 +35,9 @@ pathLabels:
     docs: ['*.md', 'docs/*'],
     config: ['*.yml']
 ```
-The above configuration woul:
+
+The above configuration would:
+
 * apply a `hotfix` label to any PR coming from a branch name starting with `hotfix-`
 * apply a `bugfix` label to any PR coming from a branch name starting with `bugfix-`
 * apply a `release` label to any PR being merged to a branch starting with `release-`
@@ -42,7 +46,6 @@ The above configuration woul:
 * apply a `config` label if the PR touches any yml file
 
 ## Setup
-```
 
 ```sh
 # Install dependencies
