@@ -106,9 +106,15 @@ describe('label changes are properly detected', () =>
     const desiredLabels: ILabelDefinition[] = []
     //clone current labels to desired
     currentLabels.forEach(val => desiredLabels.push(Object.assign({}, val)))
+
+    // modify one label
     desiredLabels[1].color = 'FFFFFF'
     desiredLabels[1].description = 'New desc'
+
+    // create another label
     desiredLabels.push({name: 'newlabel', color: '112233', description: undefined})
+
+    // check that the update logic generates a single update and a single add
     var labelActions = RepositoryLabels.generateUpdates(currentLabels, desiredLabels)
     expect(labelActions.labelsToAdd.length).toEqual(1)
     expect(labelActions.labelsToAdd[0].name).toEqual('newlabel')
