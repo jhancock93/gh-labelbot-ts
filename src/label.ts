@@ -10,7 +10,7 @@ export class Label {
   logger: LoggerWithTarget
   config: BotConfig
 
-  constructor(github: GitHubAPI, config: BotConfig, logger: LoggerWithTarget) {
+  constructor (github: GitHubAPI, config: BotConfig, logger: LoggerWithTarget) {
     this.github = github
     this.logger = logger
     this.config = config
@@ -18,7 +18,7 @@ export class Label {
     this.logger.debug('Configuration:' + JSON.stringify(config))
   }
 
-  static applyBranchLabels(branch: string, config: Map<string, string>, labels: Set<string>): void {
+  static applyBranchLabels (branch: string, config: Map<string, string>, labels: Set<string>): void {
     for (const key of config.keys()) {
       const value = config.get(key)
       if (value != null) {
@@ -30,7 +30,7 @@ export class Label {
   }
 
   // generate a set of labels based on the context and the files changed in the pull request
-  static generatePullRequestLabels(pullRequest: any, config: BotConfig, changedFiles: string[], logger: LoggerWithTarget): string[] {
+  static generatePullRequestLabels (pullRequest: any, config: BotConfig, changedFiles: string[], logger: LoggerWithTarget): string[] {
     const labels = new Set<string>()
 
     const pullNumber: number = pullRequest.number
@@ -58,7 +58,7 @@ export class Label {
   }
 
   // Applies labels to a pull request based on the pull request details in the context and the configuration
-  async apply(context: Context): Promise<Boolean> {
+  async apply (context: Context): Promise<Boolean> {
     const { title, html_url: htmlUrl }: { title: string, html_url: string } = context.payload.pull_request
     const pullNumber: number = context.payload.pull_request.number
 

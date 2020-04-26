@@ -64,7 +64,8 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/"
+    "./src/*.ts",
+    "./test/*.ts"
   ],
-  "compileOnSave": false
+  "compileOnSave": false,
 }

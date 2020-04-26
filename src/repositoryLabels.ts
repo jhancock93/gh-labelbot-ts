@@ -1,4 +1,5 @@
 import { GitHubAPI } from 'probot' // eslint-disable-line no-unused-vars
+import { LoggerWithTarget } from 'probot/lib/wrap-logger'
 
 export interface ILabelDefinition {
   name: string
@@ -8,11 +9,13 @@ export interface ILabelDefinition {
 
 export class RepositoryLabels {
   github: GitHubAPI
+  logger: LoggerWithTarget
   repo: { owner: string, repo: string }
 
-  constructor (github: GitHubAPI, owner: string, repo: string) {
+  constructor (github: GitHubAPI, owner: string, repo: string, logger: LoggerWithTarget) {
     this.github = github
     this.repo = { owner: owner, repo: repo }
+    this.logger = logger
   }
 
   async fetchCurrentLabels (): Promise<ILabelDefinition[]> {
@@ -64,6 +67,7 @@ export class RepositoryLabels {
     const currentLabels = await this.fetchCurrentLabels()
     var deltas = RepositoryLabels.generateUpdates(currentLabels, desiredLabels)
     const changes: Array<Promise<any>> = []
+    this.logger.info(`Found ${deltas.labelsToAdd.length} new labels and ${deltas.labelsToUpdate.length} labels to update`)
     deltas.labelsToAdd.forEach(add => {
       changes.push(this.github.issues.createLabel(Object.assign({}, add, this.repo)))
     })

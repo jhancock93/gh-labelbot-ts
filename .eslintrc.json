@@ -1,7 +1,19 @@
 {
-  "extends": "standard-with-typescript",
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "modules": true
+    },
+    "projectFolderIgnoreList": [
+      "lib",
+      "node_modules"
+    ]
   },
   "rules": {
     "space-before-function-paren": "off"

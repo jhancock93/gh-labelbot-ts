@@ -49,9 +49,10 @@ export = (app: Application) => {
     // nock.recorder.rec()
     const config: any = await context.config(configFilename)
     const desiredLabels = RepositoryLabels.readLabelDefinitionsFromConfig(config)
+    context.log.info(`Read ${desiredLabels.length} from config file: ${desiredLabels.map(l => l.name).join(', ')}`)
     if (desiredLabels.length > 0) {
       var repo = context.repo()
-      var labels = new RepositoryLabels(context.github, repo.owner, repo.repo)
+      var labels = new RepositoryLabels(context.github, repo.owner, repo.repo, context.log)
       await labels.syncLabels(desiredLabels)
     }
   }

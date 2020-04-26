@@ -60,13 +60,13 @@ describe('validate config parsing and loading', () => {
   })
 })
 
-describe('validate proper labels are generated', () => {
-  test('tests that a docs label is generated on markdown change', () => {
+describe ('validate proper labels are generated', () => {
+  test ('tests that a docs label is generated on markdown change', () => {
     const labels = Label.generatePullRequestLabels(pullRequestTargetRelease.pull_request, defaultBotConfig,
       ["src/README.md"], traceLogger)
     expect(labels).toEqual(expect.arrayContaining(['docs', 'release']))
   })
-  test('tests that multiple labels are generated for different cases', () => {
+  test ('tests that multiple labels are generated for different cases', () => {
     const pullRequestData = {
       url: "fakeUrl",
       html_url: "fakeHtml",
@@ -91,9 +91,9 @@ describe('validate proper labels are generated', () => {
   })
 })
 
-describe('label changes are properly detected', () => 
+describe ('label changes are properly detected', () => 
 {
-  test('label definitions are created from input properly', () => {
+  test ('label definitions are created from input properly', () => {
     const labelDefs = RepositoryLabels.readLabelDefinitionsFromConfig(defaultConfig)
     expect(labelDefs[0].name).toEqual('hotfix')
     expect(labelDefs[0].description).toEqual('A bug')
@@ -101,7 +101,7 @@ describe('label changes are properly detected', () =>
     expect(labelDefs[2].color).toEqual('000077')
   })
 
-  test('label definition updates are generated correctly', () => {
+  test ('label definition updates are generated correctly', () => {
     const currentLabels = RepositoryLabels.readLabelDefinitionsFromConfig(defaultConfig)
     const desiredLabels: ILabelDefinition[] = []
     //clone current labels to desired
@@ -112,7 +112,7 @@ describe('label changes are properly detected', () =>
     desiredLabels[1].description = 'New desc'
 
     // create another label
-    desiredLabels.push({name: 'newlabel', color: '112233', description: undefined})
+    desiredLabels.push({name: 'newlabel', color: '112233', description: ''})
 
     // check that the update logic generates a single update and a single add
     var labelActions = RepositoryLabels.generateUpdates(currentLabels, desiredLabels)
@@ -151,14 +151,14 @@ nock('https://api.github.com')
 }
 
 
-describe('My Probot app', () => {
+describe ('My Probot app', () => {
   let probot: any
   // let event: Webhooks.WebhookEvent<any>
   let mockCert: string
   // let context: Context
   // let github: GitHubAPI
 
-  beforeAll((done: Function) => {
+  beforeAll ((done: Function) => {
     fs.readFile(path.join(__dirname, 'fixtures/mock-cert.pem'), (err: Error, cert: string) => {
       if (err) return done(err)
       mockCert = cert
@@ -166,7 +166,7 @@ describe('My Probot app', () => {
     })
   })
 
-  beforeEach(() => {
+  beforeEach (() => {
     debug.enable('nock*')
     /*
     github = GitHubAPI()
@@ -198,7 +198,7 @@ describe('My Probot app', () => {
 
   jest.setTimeout(30000);
 
-  test('tests that a label is added based on markdown change', async () => {
+  test ('tests that a label is added based on markdown change', async () => {
     // doNockGetAccessToken()
     doNockConfigRequests()
 
